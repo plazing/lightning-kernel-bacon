@@ -787,6 +787,15 @@ static struct ctl_table ipv4_table[] = {
 		.maxlen         = sizeof(int),
 		.mode           = 0644,
 		.proc_handler   = proc_tcp_default_init_rwnd
+        },
+        {
+		.procname	= "tcp_autocorking",
+		.data		= &sysctl_tcp_autocorking,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= &zero,
+		.extra2		= &one,
 	},
 	{
 		.procname	= "udp_mem",
