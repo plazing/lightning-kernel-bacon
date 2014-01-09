@@ -38,7 +38,8 @@
 #include <linux/pm_qos.h>
 
 #include <mach/board.h>
-#include <mach/msm_smd.h>
+#include <soc/qcom/smd.h>
+
 #include <mach/msm_iomap.h>
 #include <soc/qcom/subsystem_restart.h>
 #include <soc/qcom/subsystem_notif.h>

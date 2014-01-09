@@ -37,7 +37,7 @@
 #include <soc/qcom/socinfo.h>
 #include <soc/qcom/rpm-notifier.h>
 #include <soc/qcom/rpm-smd.h>
-#include <mach/msm_smd.h>
+#include <soc/qcom/smd.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/trace_rpm_smd.h>
