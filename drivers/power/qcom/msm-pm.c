@@ -40,8 +40,8 @@
 #include <mach/msm_bus.h>
 #include <mach/jtag.h>
 #include "idle.h"
-#include "clock.h"
 #include "pm-boot.h"
+#include "../../../arch/arm/mach-msm/clock.h"
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/trace_msm_low_power.h>
