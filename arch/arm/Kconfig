@@ -157,9 +157,6 @@ config TRACE_IRQFLAGS_SUPPORT
 	bool
 	default y
 
-config RWSEM_GENERIC_SPINLOCK
-	bool
-
 config RWSEM_XCHGADD_ALGORITHM
 	def_bool y
 
