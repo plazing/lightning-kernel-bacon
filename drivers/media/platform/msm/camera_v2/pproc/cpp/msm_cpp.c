@@ -499,7 +499,7 @@ static int cpp_init_mem(struct cpp_device *cpp_dev)
 	int rc = 0;
 
 	kref_init(&cpp_dev->refcount);
-	cpp_dev->client = msm_ion_client_create(-1, "cpp");
+	cpp_dev->client = msm_ion_client_create("cpp");
 
 	CPP_DBG("E\n");
 	if (!cpp_dev->domain) {
