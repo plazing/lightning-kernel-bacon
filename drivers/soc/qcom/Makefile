@@ -23,3 +23,5 @@ obj-$(CONFIG_INTELLI_HOTPLUG) += intelli_hotplug.o
 obj-$(CONFIG_BRICKED_HOTPLUG) += bricked_hotplug.o
 
 obj-$(CONFIG_STATE_NOTIFIER)		+= state_notifier.o
+obj-$(CONFIG_QCOM_EARLY_RANDOM)	+= early_random.o
+
