@@ -121,7 +121,6 @@ void __init msm8974_add_drivers(void)
 	msm_spm_device_init();
 	krait_power_init();
 	tsens_tm_init_driver();
-	msm_thermal_device_init();
 #ifdef CONFIG_PSTORE_RAM
 	oppo_add_persistent_device();
 #endif
