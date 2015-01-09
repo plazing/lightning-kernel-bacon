@@ -624,7 +624,7 @@ int mdss_mdp_overlay_pipe_setup(struct msm_fb_data_type *mfd,
 		}
 
 		if (pipe == NULL) {
-			pr_err("error allocating pipe\n");
+			pr_err_ratelimited("error allocating pipe\n");
 			return -ENODEV;
 		}
 
