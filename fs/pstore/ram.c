@@ -66,11 +66,6 @@ module_param(log_level, int, 0600);
 MODULE_PARM_DESC(log_level,
 		"0: panic 1:oops 2:emerg 3:restart 4:halt (default 1)");
 
-static unsigned int mem_type;
-module_param(mem_type, uint, 0600);
-MODULE_PARM_DESC(mem_type,
-		"set to 1 to try to use unbuffered memory (default 0)");
-
 static int ramoops_ecc;
 module_param_named(ecc, ramoops_ecc, int, 0600);
 MODULE_PARM_DESC(ramoops_ecc,
@@ -84,7 +79,6 @@ struct ramoops_context {
 	struct persistent_ram_zone *fprz;
 	phys_addr_t phys_addr;
 	unsigned long size;
-	unsigned int memtype;
 	size_t record_size;
 	size_t console_size;
 	size_t ftrace_size;
@@ -357,8 +351,7 @@ static int ramoops_init_przs(struct device *dev, struct ramoops_context *cxt,
 		size_t sz = cxt->record_size;
 
 		cxt->przs[i] = persistent_ram_new(*paddr, sz, 0,
-						  &cxt->ecc_info,
-						  cxt->memtype);
+						  &cxt->ecc_info);
 		if (IS_ERR(cxt->przs[i])) {
 			err = PTR_ERR(cxt->przs[i]);
 			dev_err(dev, "failed to request mem region (0x%zx@0x%llx): %d\n",
@@ -388,7 +381,7 @@ static int ramoops_init_prz(struct device *dev, struct ramoops_context *cxt,
 		return -ENOMEM;
 	}
 
-	*prz = persistent_ram_new(*paddr, sz, sig, &cxt->ecc_info, cxt->memtype);
+	*prz = persistent_ram_new(*paddr, sz, sig, &cxt->ecc_info);
 	if (IS_ERR(*prz)) {
 		int err = PTR_ERR(*prz);
 
@@ -443,7 +436,6 @@ static int ramoops_probe(struct platform_device *pdev)
 
 	cxt->size = pdata->mem_size;
 	cxt->phys_addr = pdata->mem_address;
-	cxt->memtype = pdata->mem_type;
 	cxt->record_size = pdata->record_size;
 	cxt->console_size = pdata->console_size;
 	cxt->ftrace_size = pdata->ftrace_size;
@@ -565,7 +557,6 @@ static void ramoops_register_dummy(void)
 
 	dummy_data->mem_size = mem_size;
 	dummy_data->mem_address = mem_address;
-	dummy_data->mem_type = 0;
 	dummy_data->record_size = record_size;
 	dummy_data->console_size = ramoops_console_size;
 	dummy_data->ftrace_size = ramoops_ftrace_size;
