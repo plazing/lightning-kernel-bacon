@@ -40,6 +40,7 @@ struct msm_thermal_data {
 };
 
 #ifdef CONFIG_THERMAL_MONITOR
+<<<<<<< HEAD
 extern int msm_thermal_init(struct msm_thermal_data *pdata);
 extern int msm_thermal_device_init(void);
 extern int msm_thermal_set_frequency(uint32_t cpu, uint32_t freq,
@@ -50,6 +51,13 @@ static inline int msm_thermal_init(struct msm_thermal_data *pdata)
 	return -ENOSYS;
 }
 static inline int msm_thermal_device_init(void)
+=======
+extern int msm_thermal_set_frequency(uint32_t cpu, uint32_t freq,
+	bool is_max);
+#else
+static inline int msm_thermal_set_frequency(uint32_t cpu, uint32_t freq,
+	bool is_max)
+>>>>>>> aed0969... Thermal: Cleanup for Franco's simplified Thermal Control
 {
 	return -ENOSYS;
 }
