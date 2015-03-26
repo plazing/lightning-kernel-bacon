@@ -4033,7 +4033,6 @@ regulator_register(const struct regulator_desc *regulator_desc,
 				 config->ena_gpio, ret);
 			goto wash;
 		}
-
 	}
 
 	/* set regulator constraints */
