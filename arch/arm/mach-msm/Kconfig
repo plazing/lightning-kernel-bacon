@@ -1428,4 +1428,10 @@ config MSM_SLEEPER
 	help
 	  CPU hotplug driver
 
+config CHARGE_LEVEL
+	bool "Charge level interface"
+	default y
+	help
+	  Allows configuration of ac and usb charging levels	
+
 endif
