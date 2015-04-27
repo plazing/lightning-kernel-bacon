@@ -138,3 +138,4 @@ obj-$(CONFIG_MSM_CPR_REGULATOR) += cpr-regulator.o
 
 obj-$(CONFIG_ARCH_RANDOM) += early_random.o
 obj-$(CONFIG_PERFMAP) += perfmap.o
+obj-$(CONFIG_ZEN_DECISION) += msm_zen_decision.o
