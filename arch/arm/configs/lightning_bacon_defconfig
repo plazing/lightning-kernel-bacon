@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm 3.4.112 Kernel Configuration
+# Linux/arm 3.4.x Kernel Configuration
 #
 #
 # lightning kernel for OPO!
@@ -37,6 +37,7 @@ CONFIG_STATE_NOTIFIER=y
 #CONFIG_CC_OPTIMIZE_MORE=y
 CONFIG_QUICK_WAKEUP=y
 CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y
+CONFIG_ADRENO_IDLER=y
 
 #### Added Governors ####
 CONFIG_CPU_FREQ_GOV_IMPULSE=y
