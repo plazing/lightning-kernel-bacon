@@ -383,6 +383,12 @@ struct wcd9xxx_mbhc {
 #endif
 
 	struct mutex mbhc_lock;
+
+#ifdef CONFIG_MACH_OPPO
+	enum wcd9xxx_mbhc_plug_type fast_detection;
+	struct delayed_work mbhc_btn_delay_dwork;
+#endif
+	bool force_linein;
 };
 
 #define WCD9XXX_MBHC_CAL_SIZE(buttons, rload) ( \
