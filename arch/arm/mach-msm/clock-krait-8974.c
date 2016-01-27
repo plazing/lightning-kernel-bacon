@@ -473,7 +473,6 @@ static void get_krait_bin_format_b(struct platform_device *pdev,
 		*speed = 0;
 	}
 
-<<<<<<< HEAD
 	/* Check SVS PVS bin */
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "efuse_svs");
 	if (res) {
