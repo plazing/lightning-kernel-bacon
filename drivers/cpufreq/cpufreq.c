@@ -32,6 +32,7 @@
 
 #ifdef CONFIG_MSM_LIMITER
 #include <linux/msm_thermal.h>
+#include <soc/qcom/limiter.h>
 #endif
 
 /**
@@ -442,10 +443,22 @@ static ssize_t show_scaling_cur_freq(
 static int cpufreq_set_policy(struct cpufreq_policy *policy,
 				struct cpufreq_policy *new_policy);
 
+static bool cpufreq_update_allowed(int mpd)
+{
+#ifdef CONFIG_MSM_LIMITER
+	if (mpd == 0 && limit.mpd_enabled == 0)
+#else
+	if (mpd == 0)
+#endif
+		return false;
+
+	return true;
+}
+
 /**
  * cpufreq_per_cpu_attr_write() / store_##file_name() - sysfs write access
  */
-#define store_one(file_name, object)			\
+#define store_one(file_name, object)					\
 static ssize_t store_##file_name					\
 (struct cpufreq_policy *policy, const char *buf, size_t count)		\
 {									\
@@ -453,7 +466,7 @@ static ssize_t store_##file_name					\
 	struct cpufreq_policy new_policy;				\
 	int mpd = strcmp(current->comm, "mpdecision");			\
 									\
-	if (mpd == 0)							\
+	if (!cpufreq_update_allowed(mpd))				\
 		return ret;						\
 									\
 	ret = cpufreq_get_policy(&new_policy, policy->cpu);		\
@@ -469,7 +482,7 @@ static ssize_t store_##file_name					\
 		pr_err("cpufreq: Frequency verification failed\n");	\
 									\
 	policy->user_policy.object = new_policy.object;			\
-	ret = cpufreq_set_policy(policy, &new_policy);		\
+	ret = cpufreq_set_policy(policy, &new_policy);		        \
 									\
 	return ret ? ret : count;					\
 }
