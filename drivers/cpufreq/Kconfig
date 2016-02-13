@@ -480,13 +480,6 @@ config CPU_FREQ_GOV_HYPER
 	---help---
 	  'HYPER' - a tweaked "ondemand" based smart and smooth optimized governor!
 
-config CPU_FREQ_GOV_PMC
-        tristate "'pmc' cpufreq policy governor"	
-        select CPU_FREQ_TABLE	
-        help	
-          'smartmax' tweaked for absolute battery
-
-
 config CPU_FREQ_GOV_LULZACTIVE
 	tristate "'lulzactive' cpufreq governor"
 	depends on CPU_FREQ
