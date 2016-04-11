@@ -63,6 +63,10 @@ int charge_level = 0;			// 0 = stock charge logic, not 0 = current to set
 char charge_info_text[30] = "No charger";
 #endif
 
+#ifdef CONFIG_STATE_HELPER
+#include <linux/state_helper.h>
+#endif
+
 /* Interrupt offsets */
 #define INT_RT_STS(base)			(base + 0x10)
 #define INT_SET_TYPE(base)			(base + 0x11)
@@ -3639,6 +3643,10 @@ get_prop_capacity(struct qpnp_chg_chip *chip)
 	} else {
 		pr_debug("No BMS supply registered return 50\n");
 	}
+
+#ifdef CONFIG_STATE_HELPER
+	batt_level_notify(chip->soc_resume_limit);
+#endif
 
 	/* return default capacity to avoid userspace
 	 * from shutting down unecessarily */
