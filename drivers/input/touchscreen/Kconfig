@@ -1020,6 +1020,13 @@ config TOUCHSCREEN_SYNAPTICS_S3508_I2C_RMI
 	  This enables support for s3508 I2C RMI touchscreen devices.
 
 
+config ALUCARD_TOUCHSCREEN_BOOST
+	tristate "Touchscreen boost"
+	depends on CPUFREQ_LIMITER
+	default n
+	help
+	  Alucard touchscreen boost.
+
 source "drivers/input/touchscreen/gt9xx/Kconfig"
 
 endif
