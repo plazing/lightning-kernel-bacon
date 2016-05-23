@@ -398,6 +398,7 @@ KBUILD_CFLAGS   := -Wall -DNDEBUG -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Wno-deprecated-declarations \
                    -Wno-tautological-compare \
 		   -Wno-discarded-array-qualifiers \
+                   -Wno-unused-label \
 		   -std=gnu89
 
 KBUILD_AFLAGS_KERNEL :=
