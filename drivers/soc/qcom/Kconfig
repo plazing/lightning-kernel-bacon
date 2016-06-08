@@ -110,6 +110,11 @@ config MAXIMUM_CURRENT_THROTTLING
 	  turn on/off CPU based current throttling by setting the
 	  credit/upper limit in the CPU registers.
 
+config THUNDERPLUG_CONTROL
+	bool "Enable plugging down/up of cores based on load per core"
+	help
+	  This driver hotplugs cpu cores based on per-core load
+
 source "drivers/soc/qcom/memshare/Kconfig"
 
 endif # ARCH_MSM
