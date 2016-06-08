@@ -19,5 +19,6 @@ obj-$(CONFIG_MEM_SHARE_QMI_SERVICE)		+= memshare/
 obj-y		+= socinfo.o
 
 obj-$(CONFIG_THUNDERPLUG_CONTROL) += thunderplug.o
+obj-$(CONFIG_MSM_HOTPLUG) += msm_hotplug.o
 
 obj-$(CONFIG_STATE_NOTIFIER)		+= state_notifier.o
