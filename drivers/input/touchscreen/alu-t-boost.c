@@ -24,6 +24,7 @@
 #include <linux/cpu.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
+#include <linux/smpboot.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/input.h>
@@ -45,10 +46,14 @@ static struct workqueue_struct *touch_boost_wq;
 static struct delayed_work input_boost_rem;
 static struct work_struct input_boost_work;
 
-static bool input_boost_enabled;
+static unsigned int input_boost_freq;
+module_param(input_boost_freq, uint, 0644);
 
 static unsigned int input_boost_ms = 40;
 module_param(input_boost_ms, uint, 0644);
+
+static unsigned int nr_boost_cpus = 4;
+module_param(nr_boost_cpus, uint, 0644);
 
 static u64 last_input_time;
 
@@ -56,83 +61,18 @@ static unsigned int min_input_interval = 150;
 module_param(min_input_interval, uint, 0644);
 
 static struct min_cpu_limit {
-	uint32_t input_boost_freq[4];
+	uint32_t user_min_freq_lock[4];
 	uint32_t user_boost_freq_lock[4];
 } limit = {
-	.input_boost_freq[0] = 0,
-	.input_boost_freq[1] = 0,
-	.input_boost_freq[2] = 0,
-	.input_boost_freq[3] = 0,
+	.user_min_freq_lock[0] = 0,
+	.user_min_freq_lock[1] = 0,
+	.user_min_freq_lock[2] = 0,
+	.user_min_freq_lock[3] = 0,
 	.user_boost_freq_lock[0] = 0,
 	.user_boost_freq_lock[1] = 0,
 	.user_boost_freq_lock[2] = 0,
 	.user_boost_freq_lock[3] = 0,
 };
-
-static int set_input_boost_freq(const char *buf, const struct kernel_param *kp)
-{
-	int i, ntokens = 0;
-	unsigned int val, cpu;
-	const char *cp = buf;
-	bool enabled = false;
-
-	while ((cp = strpbrk(cp + 1, " :")))
-		ntokens++;
-
-	/* single number: apply to all CPUs */
-	if (!ntokens) {
-		if (sscanf(buf, "%u\n", &val) != 1)
-			return -EINVAL;
-		for_each_possible_cpu(i)
-			limit.input_boost_freq[i] = val;
-		goto check_enable;
-	}
-
-	/* CPU:value pair */
-	if (!(ntokens % 2))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < ntokens; i += 2) {
-		if (sscanf(cp, "%u:%u", &cpu, &val) != 2)
-			return -EINVAL;
-		if (cpu > num_possible_cpus())
-			return -EINVAL;
-
-		limit.input_boost_freq[cpu] = val;
-		cp = strchr(cp, ' ');
-		cp++;
-	}
-
-check_enable:
-	for_each_possible_cpu(i) {
-		if (limit.input_boost_freq[i]) {
-			enabled = true;
-			break;
-		}
-	}
-	input_boost_enabled = enabled;
-
-	return 0;
-}
-
-static int get_input_boost_freq(char *buf, const struct kernel_param *kp)
-{
-	int cnt = 0, cpu;
-
-	for_each_possible_cpu(cpu) {
-		cnt += snprintf(buf + cnt, PAGE_SIZE - cnt,
-				"%d:%u ", cpu, limit.input_boost_freq[cpu]);
-	}
-	cnt += snprintf(buf + cnt, PAGE_SIZE - cnt, "\n");
-	return cnt;
-}
-
-static const struct kernel_param_ops param_ops_input_boost_freq = {
-	.set = set_input_boost_freq,
-	.get = get_input_boost_freq,
-};
-module_param_cb(input_boost_freq, &param_ops_input_boost_freq, NULL, 0644);
 
 static void do_input_boost_rem(struct work_struct *work)
 {
@@ -141,7 +81,7 @@ static void do_input_boost_rem(struct work_struct *work)
 	for_each_possible_cpu(cpu) {
 		if (limit.user_boost_freq_lock[cpu] > 0) {
 			dprintk("Removing input boost for CPU%u\n", cpu);
-			set_cpu_min_lock(cpu, 0);
+			set_cpu_min_lock(cpu, limit.user_min_freq_lock[cpu]);
 			limit.user_boost_freq_lock[cpu] = 0;
 		}
 	}
@@ -150,17 +90,22 @@ static void do_input_boost_rem(struct work_struct *work)
 static void do_input_boost(struct work_struct *work)
 {
 	unsigned int cpu;
+	unsigned nr_cpus = nr_boost_cpus;
 
 	cancel_delayed_work_sync(&input_boost_rem);
 
-	for_each_possible_cpu(cpu) {
-		/* Save user boost lock */
-		limit.user_boost_freq_lock[cpu] = limit.input_boost_freq[cpu];
+	if (nr_cpus <= 0)
+		nr_cpus = 1;
+	else if (nr_cpus > NR_CPUS)
+		nr_cpus = NR_CPUS;
 
-		if (limit.user_boost_freq_lock[cpu] > 0) {
-			dprintk("Input boost for CPU%u\n", cpu);
-			set_cpu_min_lock(cpu, limit.user_boost_freq_lock[cpu]);
-		}
+	for (cpu = 0; cpu < nr_cpus; cpu++) {
+		/* Save user current min & boost lock */
+		limit.user_min_freq_lock[cpu] = get_cpu_min_lock(cpu);
+		limit.user_boost_freq_lock[cpu] = input_boost_freq;
+
+		dprintk("Input boost for CPU%u\n", cpu);
+		set_cpu_min_lock(cpu, limit.user_boost_freq_lock[cpu]);
 	}
 
 	queue_delayed_work(touch_boost_wq,
@@ -173,7 +118,7 @@ static void touchboost_input_event(struct input_handle *handle,
 {
 	u64 now;
 
-	if (!input_boost_enabled)
+	if (!input_boost_freq)
 		return;
 
 	now = ktime_to_us(ktime_get());
@@ -244,11 +189,6 @@ static const struct input_device_id touchboost_ids[] = {
 		.absbit = { [BIT_WORD(ABS_X)] =
 			BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
 	},
-	/* Keypad */
-	{
-		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
-		.evbit = { BIT_MASK(EV_KEY) },
-	},
 	{ },
 };
 
@@ -265,7 +205,10 @@ static int touch_boost_init(void)
 {
 	int ret;
 
-	touch_boost_wq = alloc_workqueue("touch_boost_wq", WQ_HIGHPRI, 0);
+	touch_boost_wq = alloc_workqueue("touch_boost_wq", WQ_HIGHPRI | 
+			WQ_MEM_RECLAIM | 
+			WQ_UNBOUND | 
+			__WQ_ORDERED, 0);
 	if (!touch_boost_wq)
 		return -EFAULT;
 
