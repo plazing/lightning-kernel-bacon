@@ -47,6 +47,7 @@ CONFIG_CPU_FREQ_GOV_SMARTMAX=y
 #### TCP Options ####
 
 #### Schedulers ####
+CONFIG_IOSCHED_FIOPS=y
 
 #
 # General setup
