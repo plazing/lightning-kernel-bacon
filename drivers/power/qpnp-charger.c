@@ -512,6 +512,7 @@ struct qpnp_chg_chip {
 	struct qpnp_iadc_chip		*iadc_dev;
 	struct qpnp_adc_tm_chip		*adc_tm_dev;
 	struct mutex			jeita_configure_lock;
+	struct mutex			lcd_on_var_lock;
 	spinlock_t			usbin_health_monitor_lock;
 	struct mutex			batfet_vreg_lock;
 	struct alarm			reduce_power_stage_alarm;
@@ -543,6 +544,7 @@ struct qpnp_chg_chip {
 /* jingchun.wang@Onlinerd.Driver, 2013/12/27  Add for auto adapt current by software. */
 	unsigned int aicl_current;
 	bool lcd_is_on;
+	bool dont_print_changes;
 	int last_iusbmax;
 	int last_ibatmax;
 #endif
@@ -1272,7 +1274,7 @@ qpnp_chg_iusbmax_set(struct qpnp_chg_chip *chip, int mA)
 	}
 
 	if(chip->last_iusbmax != mA) {
-		pr_info("%d mA\n", mA);
+		if(!chip->dont_print_changes) pr_info("%d mA\n", mA);
 		chip->last_iusbmax = mA;
 	}
 
@@ -4164,7 +4166,7 @@ qpnp_chg_ibatmax_set(struct qpnp_chg_chip *chip, int chg_current)
 #endif
 
 	if(chip->last_ibatmax != chg_current) {
-		pr_info("%d mA\n", chg_current);
+		if(!chip->dont_print_changes) pr_info("%d mA\n", chg_current);
 		chip->last_ibatmax = chg_current;
 	}
 
@@ -6772,9 +6774,8 @@ static int set_prop_batt_health(struct qpnp_chg_chip *chip, int batt_health)
 /* jingchun.wang@Onlinerd.Driver, 2013/12/27  Add for auto adapt current by software. */
 static int soft_aicl(struct qpnp_chg_chip *chip)
 {
-	int i, chg_vol, lon;
-	lon = chip->lcd_is_on;
-
+	int i, chg_vol;
+	chip->dont_print_changes = true;
 	chip->aicl_interrupt = false;
 	qpnp_chg_vinmin_set(chip, 4440);
 	qpnp_chg_iusbmax_set(chip, 150);
@@ -6786,7 +6787,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			chip->aicl_current = 100;
 			pr_info("soft aicl s1:%d\n", chg_vol);
 			qpnp_chg_iusbmax_set(chip, 100);
-			return 0;
+			goto end;
 		}
 	}
 
@@ -6799,7 +6800,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			pr_info("soft aicl s2:%d\n", chg_vol);
 			qpnp_chg_iusbmax_set(chip, 150);
 			chip->aicl_current = 150;
-			return 0;
+			goto end;
 		}
 	}
 
@@ -6809,7 +6810,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			qpnp_chg_iusbmax_set(chip, 500);
 			chip->aicl_current = 500;
 			chip->aicl_interrupt = true;
-			return 0;
+			goto end;
 		}
 		chg_vol = get_prop_charger_voltage_now(chip);
 		if (chg_vol < SOFT_AICL_VOL) {
@@ -6819,7 +6820,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			if(!chip->usb_present) {
 				chip->aicl_interrupt = true;
 			}
-			return 0;
+			goto end;
 		}
 	}
 
@@ -6829,7 +6830,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			qpnp_chg_iusbmax_set(chip, 900);
 			chip->aicl_current = 900;
 			chip->aicl_interrupt = true;
-			return 0;
+			goto end;
 		}
 		chg_vol = get_prop_charger_voltage_now(chip);
 		if (chg_vol < SOFT_AICL_VOL + 50) {
@@ -6840,7 +6841,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			if(!chip->usb_present) {
 				chip->aicl_interrupt = true;
 			}
-			return 0;
+			goto end;
 		}
 	}
 	
@@ -6852,7 +6853,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			qpnp_chg_iusbmax_set(chip, 900);
 			chip->aicl_current = 900;
 			chip->aicl_interrupt = true;
-			return 0;
+			goto end;
 		}
 		if (i == 20)
 			qpnp_chg_ibatmax_set(chip, 1344);
@@ -6869,7 +6870,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			if (!chip->usb_present) {
 				chip->aicl_interrupt = true;
 			}
-			return 0;
+			goto end;
 		}
 	}
 	
@@ -6881,7 +6882,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			qpnp_chg_iusbmax_set(chip, 1500);
 			chip->aicl_current = 1500;
 			chip->aicl_interrupt = true;
-			return 0;
+			goto end;
 		}
 		if (i == 20)
 			qpnp_chg_ibatmax_set(chip, 1728);
@@ -6891,7 +6892,7 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			qpnp_chg_ibatmax_set(chip, 2112);
 		chg_vol = get_prop_charger_voltage_now(chip);
 		if (chg_vol < SOFT_AICL_VOL - 30) {
-			if(lon) {
+			if(chip->lcd_is_on) {
 			qpnp_chg_iusbmax_set(chip, 1200);
 			qpnp_chg_iusbmax_set(chip, 1200);
 			} else {
@@ -6903,11 +6904,11 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 			if (!chip->usb_present) {
 				chip->aicl_interrupt = true;
 			}
-			return 0;
+			goto end;
 		}
 	}
 
-	if(!lon) {
+	if(!chip->lcd_is_on) {
 	qpnp_chg_iusbmax_set(chip, 2000);
 	qpnp_chg_iusbmax_set(chip, 2000);
 	} else {
@@ -6915,8 +6916,10 @@ static int soft_aicl(struct qpnp_chg_chip *chip)
 	qpnp_chg_iusbmax_set(chip, 1200);
 	}
 	chip->aicl_current = 2000;
+end:
+	chip->dont_print_changes = false;
+	pr_info("iusbmax: %d mA, ibatmax: %d mA\n", chip->last_iusbmax, chip->last_ibatmax);
 	return 0;
-	
 aicl_err:
 	chip->aicl_current = 0;
 	return 0;
@@ -8195,6 +8198,7 @@ static void qpnp_charge_info_init(struct qpnp_chg_chip *chip)
 	chip->aicl_current = 0;
 	chip->aicl_interrupt = false;
 	chip->lcd_is_on = false;
+	chip->dont_print_changes = false;
 	chip->usb_present_count = 0;/* yangfangbiao@oneplus.cn, 2014/12/27  Add for  sync with android 4.4  */
 }
 
@@ -8281,10 +8285,14 @@ static int fb_notifier_callback(struct notifier_block *self,
 			blank = evdata->data;
 
 			if (*blank == FB_BLANK_UNBLANK)
+				mutex_lock(&chip->lcd_on_var_lock);
 				chip->lcd_is_on = true;
+				mutex_unlock(&chip->lcd_on_var_lock);
 
 			if (*blank == FB_BLANK_POWERDOWN)
+				mutex_lock(&chip->lcd_on_var_lock);
 				chip->lcd_is_on = false;
+				mutex_unlock(&chip->lcd_on_var_lock);
 
 			chip->usb_psy->get_property(chip->usb_psy,
 			  POWER_SUPPLY_PROP_CURRENT_MAX, &ret);
@@ -8520,6 +8528,7 @@ qpnp_charger_probe(struct spmi_device *spmi)
 			qpnp_chg_batfet_lcl_work);
 	INIT_WORK(&chip->insertion_ocv_work,
 			qpnp_chg_insertion_ocv_work);
+	mutex_init(&chip->lcd_on_var_lock);
 
 	/* Get all device tree properties */
 	rc = qpnp_charger_read_dt_props(chip);
@@ -8976,6 +8985,7 @@ qpnp_charger_remove(struct spmi_device *spmi)
 
 	mutex_destroy(&chip->batfet_vreg_lock);
 	mutex_destroy(&chip->jeita_configure_lock);
+	mutex_destroy(&chip->lcd_on_var_lock);
 
 	regulator_unregister(chip->otg_vreg.rdev);
 	regulator_unregister(chip->boost_vreg.rdev);
