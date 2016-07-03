@@ -205,8 +205,13 @@ inline static void smartmax_update_min_max_allcpus(void) {
 	for_each_online_cpu(cpu)
 	{
 		struct smartmax_info_s *this_smartmax = &per_cpu(smartmax_info, cpu);
+		if (this_smartmax->cur_policy){
+			if (lock_policy_rwsem_write(cpu) < 0)
+				continue;
 
 			smartmax_update_min_max(this_smartmax, this_smartmax->cur_policy);
+			unlock_policy_rwsem_write(cpu);
+		}
 	}
 }
 
