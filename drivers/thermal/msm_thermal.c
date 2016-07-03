@@ -81,9 +81,6 @@
 #define EFUSE_BIT_MASK_8976     0x7
 #define EFUSE_DATA_MATCH_8976   0x1
 
-unsigned int temp_threshold = 60;
-module_param(temp_threshold, int, 0755);
-
 #define VALIDATE_AND_SET_MASK(_node, _key, _mask, _cpu) \
 	do { \
 		if (of_property_read_bool(_node, _key)) \
@@ -3306,7 +3303,7 @@ static void do_freq_control(long temp)
 	if (!freq_table_get)
 		return;
 
-	if (temp >= temp_threshold) {
+	if (temp >= msm_thermal_info.limit_temp_degC) {
 		if (limit_idx == limit_idx_low)
 			return;
 
@@ -3314,7 +3311,7 @@ static void do_freq_control(long temp)
 		if (limit_idx < limit_idx_low)
 			limit_idx = limit_idx_low;
 		max_freq = table[limit_idx].frequency;
-	} else if (temp < temp_threshold -
+	} else if (temp < msm_thermal_info.limit_temp_degC -
 		 msm_thermal_info.temp_hysteresis_degC) {
 		if (limit_idx == limit_idx_high)
 			return;
