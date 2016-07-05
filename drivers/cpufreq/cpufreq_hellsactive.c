@@ -118,7 +118,7 @@ static int nabove_hispeed_delay = ARRAY_SIZE(default_above_hispeed_delay);
 #define DEFAULT_BOOSTPULSE_DURATION 500000
 static int boostpulse_duration_val = DEFAULT_BOOSTPULSE_DURATION;
 #define DEFAULT_INPUT_BOOST_FREQ 1036800
-unsigned int hells_input_boost_freq = DEFAULT_INPUT_BOOST_FREQ;
+int hells_input_boost_freq = DEFAULT_INPUT_BOOST_FREQ;
 
 /*
  * Making sure cpufreq stays low when it needs to stay low
@@ -421,7 +421,7 @@ static void cpufreq_interactive_timer(unsigned long data)
 	do_div(cputime_speedadj, delta_time);
 	loadadjfreq = (unsigned int)cputime_speedadj * 100;
 	cpu_load = loadadjfreq / pcpu->policy->cur;
-	boosted = now < (get_input_time() + boostpulse_duration_val);
+	boosted = now < (last_input_time + boostpulse_duration_val);
 
 	if (counter < 5) {
 		counter++;
