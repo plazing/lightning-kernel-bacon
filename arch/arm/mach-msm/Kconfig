@@ -1881,6 +1881,7 @@ config MSM_CPU_FREQ_MAX
 
 endif # CPU_FREQ_MSM
 
+<<<<<<< HEAD
 config ZEN_DECISION
 	bool "Zen Decision MPDecision Replacement"
 	depends on SMP && FB
@@ -1906,12 +1907,6 @@ config THUNDERPLUG_CONTROL
 	bool "Enable plugging down/up of cores based on load per core"
 	help
 	  This driver hotplugs cpu cores based on per-core load
-
-config CPU_VOLTAGE_TABLE
-	bool "Enable CPU Voltage Table via sysfs for adjustements"
-	default n
-	help
-	  DTS based kernel User Votlage Control
 
 config MSM_AVS_HW
 	bool "Enable Adaptive Voltage Scaling (AVS)"
