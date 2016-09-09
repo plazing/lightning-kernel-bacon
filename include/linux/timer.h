@@ -81,8 +81,8 @@ extern struct tvec_base boot_tvec_bases;
 			__FILE__ ":" __stringify(__LINE__))	\
 	}
 
-#define TBASE_MAKE_DEFERRED(ptr) ((struct tvec_base *)		\
-		  ((unsigned char *)(ptr) + TIMER_DEFERRABLE))
+#define TIMER_INITIALIZER(_function, _expires, _data)		\
+	__TIMER_INITIALIZER((_function), (_expires), (_data), 0)
 
 #define TIMER_DEFERRED_INITIALIZER(_function, _expires, _data)	\
 	__TIMER_INITIALIZER((_function), (_expires), (_data), TIMER_DEFERRABLE)
