@@ -569,7 +569,7 @@ int __init cpq_auto_hotplug_init(void)
 	
 	enabled = false;
 	// disable mpdecision load calc - just burning cpu cycles
-	enable_rq_load_calc(false);
+	enable_rq_load_calc(true);
 
 	return err;
 	
