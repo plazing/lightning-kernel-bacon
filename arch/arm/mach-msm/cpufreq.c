@@ -66,18 +66,6 @@ struct cpufreq_work_struct {
 static DEFINE_PER_CPU(struct cpufreq_work_struct, cpufreq_work);
 static struct workqueue_struct *msm_cpufreq_wq;
 
-struct cpufreq_work_struct {
-	struct work_struct work;
-	struct cpufreq_policy *policy;
-	struct completion complete;
-	int frequency;
-	unsigned int index;
-	int status;
-};
-
-static DEFINE_PER_CPU(struct cpufreq_work_struct, cpufreq_work);
-static struct workqueue_struct *msm_cpufreq_wq;
-
 struct cpufreq_suspend_t {
 	struct mutex suspend_mutex;
 	int device_suspended;
@@ -524,7 +512,7 @@ static int cpufreq_parse_dt(struct device *dev)
 			GFP_KERNEL);
 
 	if (!dts_freq_table)
-		return ERR_PTR(-ENOMEM);
+		return -ENOMEM;
 
 	for (i = 0, j = 0; i < nf; i++, j += 3)
 		dts_freq_table[i].frequency = data[j];
